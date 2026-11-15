@@ -43,13 +43,21 @@ class Api:
             webbrowser.open("https://youtube.com")
 
     def open_tool(self, tool):
+        local_bins = {
+            "cpuz": resource_path(os.path.join("tools", "cpuz.exe")),
+            "gpuz": resource_path(os.path.join("tools", "gpuz.exe")),
+            "cdi": resource_path(os.path.join("tools", "cdi.exe"))
+        }
         urls = {
             "cpuz": "https://cpuid.com",
             "gpuz": "https://techpowerup.com",
             "cdi": "https://crystalmark.info",
             "furmark": "https://geeks3d.com"
         }
-        if tool in urls:
+        bin_path = local_bins.get(tool)
+        if bin_path and os.path.exists(bin_path) and os.path.getsize(bin_path) > 100000:
+            subprocess.Popen([bin_path], shell=True)
+        elif tool in urls:
             webbrowser.open(urls[tool])
 
     def system_boost(self):
