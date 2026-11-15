@@ -1,4 +1,3 @@
-
 name: Build UDEFI Hybrid EXE
 
 on: [push]
@@ -15,9 +14,12 @@ jobs:
         run: C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /optimize /r:System.Management.dll /out:udefi_core.exe udefi_core.cs
       - name: Install Python Deps
         run: pip install pyinstaller pywebview pillow
+      - name: Generate Icon
+        run: python -c "from PIL import Image, ImageDraw; img=Image.new('RGBA',(256,256),(0,0,0,0)); d=ImageDraw.Draw(img); d.rounded_rectangle([12,12,244,244],48,fill='#0D0D0D',outline='#FF6D00',width=12); d.arc([58,58,198,198],start=150,end=30,fill='#FF6D00',width=24); img.save('udefi.ico')"
       - name: Build Hybrid EXE
-        run: pyinstaller --noconsole --onefile --add-data "ui.html;." --add-binary "udefi_core.exe;." --name UDEFI udefi.py
+        run: pyinstaller --noconsole --onefile --icon=udefi.ico --add-data "ui.html;." --add-binary "udefi_core.exe;." --name UDEFI udefi.py
       - uses: actions/upload-artifact@v4
         with:
           name: UDEFI_Hybrid_v0.2_Windows
           path: dist/UDEFI.exe
+
