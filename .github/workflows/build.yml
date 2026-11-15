@@ -17,7 +17,6 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path tools
           
-          # Скачиваем CrystalDiskInfo напрямую с официального GitHub
           $cdiUrl = (Invoke-RestMethod -Uri "https://github.com").assets | Where-Object { $_.name -like "CrystalDiskInfo*.zip" -and $_.name -notlike "*Aoi*" -and $_.name -notlike "*Shizuku*" } | Select-Object -First 1 -ExpandProperty browser_download_url
           if ($cdiUrl) {
             curl.exe -L -s -o tools\cdi.zip $cdiUrl
@@ -25,12 +24,10 @@ jobs:
             Get-ChildItem -Path tools\cdi -Filter "DiskInfo64.exe" -Recurse | Copy-Item -Destination tools\cdi.exe -Force
           }
 
-          # Скачиваем актуальный CPU-Z через winget в локальную папку
           winget download --id CPUID.CPU-Z -d tools\cpuz_dl --accept-package-agreements --accept-source-agreements
           $cpuzExe = Get-ChildItem -Path tools\cpuz_dl -Filter "*.exe" | Select-Object -First 1
           if ($cpuzExe) { Copy-Item $cpuzExe.FullName -Destination tools\cpuz.exe -Force }
 
-          # Скачиваем актуальный GPU-Z через winget в локальную папку
           winget download --id TechPowerUp.GPU-Z -d tools\gpuz_dl --accept-package-agreements --accept-source-agreements
           $gpuzExe = Get-ChildItem -Path tools\gpuz_dl -Filter "*.exe" | Select-Object -First 1
           if ($gpuzExe) { Copy-Item $gpuzExe.FullName -Destination tools\gpuz.exe -Force }
@@ -39,7 +36,7 @@ jobs:
       - name: Install Python Deps
         run: pip install pyinstaller pywebview pillow
       - name: Generate Icon
-        run: python -c "from PIL import Image, ImageDraw; img=Image.new('RGBA',(256,256),(0,0,0,0)); d=ImageDraw.Draw(img); d.rounded_rectangle(,48,fill='#0D0D0D',outline='#FF6D00',width=12); d.arc(,start=150,end=30,fill='#FF6D00',width=24); img.save('udefi.ico')"
+        run: python -c "from PIL import Image, ImageDraw; img=Image.new('RGBA',(256,256),(0,0,0,0)); d=ImageDraw.Draw(img); d.rounded_rectangle((16,16,240,240),48,fill='#0D0D0D',outline='#FF6D00',width=12); d.arc((56,56,200,200),start=150,end=30,fill='#FF6D00',width=24); img.save('udefi.ico')"
       - name: Build Hybrid EXE
         run: pyinstaller --noconsole --onefile --icon=udefi.ico --add-data "ui.html;." --add-binary "udefi_core.exe;." --add-data "tools;tools" --name UDEFI udefi.py
       - uses: actions/upload-artifact@v4
