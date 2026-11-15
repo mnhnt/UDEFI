@@ -1,16 +1,18 @@
+
 import tkinter as tk
 from tkinter import filedialog, messagebox
 import subprocess
 import platform
 import ctypes
 import shutil
+import traceback
 import os
 
-def get_wmi(cmd):
+def get_ps(cmd):
     try:
-        out = subprocess.check_output(cmd, shell=True, stderr=subprocess.DEVNULL).decode("cp866", errors="ignore")
-        lines = [line.strip() for line in out.splitlines() if line.strip()]
-        return lines[1] if len(lines) > 1 else "Не определено"
+        full_cmd = f'powershell -NoProfile -Command "{cmd}"'
+        out = subprocess.check_output(full_cmd, shell=True, stderr=subprocess.DEVNULL).decode("utf-8", errors="ignore").strip()
+        return out if out else "Не определено"
     except Exception:
         return "Не определено"
 
@@ -25,7 +27,7 @@ def get_current_wallpaper():
 class UDEFIApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("UDEFI // Темы, Обои и Рентген Железа v1.2")
+        self.root.title("UDEFI // Темы, Обои и Рентген Железа v1.3")
         self.root.geometry("720x530")
         self.root.resizable(False, False)
 
@@ -77,7 +79,6 @@ class UDEFIApp:
         self.content = tk.Frame(self.root)
         self.content.pack(fill="both", expand=True)
 
-        # --- ВКЛАДКА 1: НАРОДНЫЙ СТИЛЬ ---
         self.wp_frame = tk.Frame(self.content)
         self.preview_canvas = tk.Canvas(self.wp_frame, width=680, height=220, highlightthickness=1, highlightbackground="#333333")
         self.preview_canvas.pack(pady=(5, 8))
@@ -98,7 +99,6 @@ class UDEFIApp:
                                       font=("Consolas", 10, "bold"), relief="flat", padx=12, pady=8, cursor="hand2")
         self.apply_wp_btn.pack(side="left", expand=True, fill="x", padx=(6, 0))
 
-        # --- ВКЛАДКА 2: РЕНТГЕН ЖЕЛЕЗА ---
         self.info_frame = tk.Frame(self.content)
         self.info_box = tk.Text(self.info_frame, font=("Consolas", 10), relief="flat", padx=15, pady=15, height=15, state="disabled")
         self.info_box.pack(fill="both", expand=True, padx=20, pady=10)
@@ -107,7 +107,6 @@ class UDEFIApp:
                                   font=("Consolas", 11, "bold"), relief="flat", pady=8, cursor="hand2")
         self.scan_btn.pack(fill="x", padx=20, pady=(0, 15))
 
-        # --- ВКЛАДКА 3: ДЛЯ КОРПОРАТИВНЫХ ---
         self.corp_frame = tk.Frame(self.content)
         self.corp_title = tk.Label(self.corp_frame,
                                    text="Зашёл с брендового ноута и хочешь заводской лоск? Не проблема, поможем!\nВыбери свой бренд ниже, чтобы подтянуть заводские обои и советы:",
@@ -178,3 +177,105 @@ class UDEFIApp:
         self.preview_canvas.delete("all")
         self.preview_canvas.configure(bg="#1A0800")
         self.preview_canvas.create_oval(250, -50, 760, 290, fill="#B34700", outline="")
+        self.preview_canvas.create_oval(320, 10, 720, 250, fill="#FF6D00", outline="")
+self.preview_canvas.create_polygon(0, 130, 220, 80, 460, 170, 680, 100, 680, 220, 0, 220, fill="#0A0A0A", smooth=True)
+self.preview_canvas.create_polygon(0, 170, 280, 130, 500, 200, 680, 150, 680, 220, 0, 220, fill="#050505", smooth=True)
+self.preview_canvas.create_text(610, 196, text="UDEFI // DNS", fill="#FF9E40", font=("Consolas", 12, "bold"))
+self.preview_canvas.create_text(340, 40, text="ФИРМЕННЫЙ СТИЛЬ СООБЩЕСТВА (2010–2014+)", fill="#FFFFFF", font=("Consolas", 10, "bold"))
+def choose_wallpaper(self):
+path = filedialog.askopenfilename(
+title="Выбери картинку для рабочего стола",
+filetypes=[("Изображения", "*.jpg *.jpeg *.png *.bmp")]
+)
+if path:
+self.selected_wp = os.path.abspath(path)
+self.wp_status.configure(text=f"Выбран файл: {os.path.basename(path)}")
+def set_wallpaper(self):
+if not self.selected_wp:
+messagebox.showinfo("UDEFI", "Сначала выбери картинку кнопкой «Выбрать файл обоев»!")
+return
+try:
+cur = get_current_wallpaper()
+if cur and os.path.exists(cur) and not os.path.exists(self.backup_path):
+shutil.copy2(cur, self.backup_path)
+ctypes.windll.user32.SystemParametersInfoW(20, 0, self.selected_wp, 3)
+self.wp_status.configure(text="[OK] Новые обои установлены! (Старые сохранены в бэкап)")
+except Exception as e:
+messagebox.showerror("Ошибка", f"Не удалось применить обои: {e}")
+def switch_tab(self, tab):
+self.active_tab = tab
+self.wp_frame.pack_forget()
+self.info_frame.pack_forget()
+self.corp_frame.pack_forget()
+if tab == "wallpapers":
+self.wp_frame.pack(fill="both", expand=True)
+elif tab == "info":
+self.info_frame.pack(fill="both", expand=True)
+else:
+self.corp_frame.pack(fill="both", expand=True)
+self.apply_theme(self.current_theme)
+def apply_theme(self, name):
+self.current_theme = name
+t = self.themes[name]
+for w in [self.root, self.header, self.btn_frame, self.nav_frame, self.content,
+self.wp_frame, self.wp_btns, self.info_frame, self.corp_frame, self.brands_grid]:
+w.configure(bg=t["bg"])
+self.title_lbl.configure(bg=t["bg"], fg=t["accent"])
+self.wp_status.configure(bg=t["bg"], fg="#AAAAAA")
+self.corp_title.configure(bg=t["bg"], fg=t["text"])
+self.info_box.configure(bg=t["panel"], fg=t["text"])
+self.corp_info.configure(bg=t["panel"], fg="#CCCCCC")
+btn_fg = "#000000" if name != "red" else "#FFFFFF"
+self.choose_btn.configure(bg=t["panel"], fg=t["text"])
+self.apply_wp_btn.configure(bg=t["accent"], fg=btn_fg)
+self.scan_btn.configure(bg=t["accent"], fg=btn_fg)
+self.tab_wp_btn.configure(bg=t["accent"] if self.active_tab == "wallpapers" else t["panel"],
+fg=btn_fg if self.active_tab == "wallpapers" else t["text"])
+self.tab_info_btn.configure(bg=t["accent"] if self.active_tab == "info" else t["panel"],
+fg=btn_fg if self.active_tab == "info" else t["text"])
+self.tab_corp_btn.configure(bg=t["accent"] if self.active_tab == "corp" else t["panel"],
+fg=btn_fg if self.active_tab == "corp" else t["text"])
+def scan_hardware(self):
+self.info_box.configure(state="normal")
+self.info_box.delete("1.0", tk.END)
+self.info_box.insert(tk.END, "Сканирую железо ноутбука (подожди 2–3 секунды)...\n")
+self.info_box.configure(state="disabled")
+self.root.update()
+board_maker = get_ps("(Get-CimInstance Win32_BaseBoard).Manufacturer")
+board_prod = get_ps("(Get-CimInstance Win32_BaseBoard).Product")
+cpu_name = get_ps("(Get-CimInstance Win32_Processor).Name")
+gpu_name = get_ps("(Get-CimInstance Win32_VideoController).Name")
+ram_bytes = get_ps("(Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory")
+try:
+ram_gb = f"{round(int(ram_bytes) / (1024**3))} ГБ"
+except Exception:
+ram_gb = "Не определено"
+if any(tag in cpu_name.upper() for tag in ["HQ", "MQ", "H ", "M "]):
+cpu_verdict = "[+] МОЩНЫЙ ПРОЦЕССОР (полноценный чип)"
+elif "U" in cpu_name.upper():
+cpu_verdict = "[!] ЭНЕРГОСБЕРЕГАЮЩИЙ ЧИП (U-серия)"
+else:
+cpu_verdict = "[i] Стандартный процессор"
+report = (
+f"=== ПАСПОРТ СИСТЕМЫ UDEFI ===\n\n"
+f"• Платформа / Плата : {board_maker} ({board_prod})\n"
+f"• Процессор         : {cpu_name}\n"
+f"  Вердикт           : {cpu_verdict}\n"
+f"• Видеокарта        : {gpu_name}\n"
+f"• Оперативная память: {ram_gb}\n"
+f"• Система           : {platform.system()} {platform.release()}\n\n"
+f"=== СОВЕТ UDEFI ===\n"
+f"На вкладке 'Народный стиль' можно поставить обои сообщества,\n"
+f"а на вкладке 'Для корпоративных' — вернуть заводской стиль брендов."
+)
+self.info_box.configure(state="normal")
+self.info_box.delete("1.0", tk.END)
+self.info_box.insert(tk.END, report)
+self.info_box.configure(state="disabled")
+if name == "main":
+try:
+root = tk.Tk()
+app = UDEFIApp(root)
+root.mainloop()
+except Exception:
+messagebox.showerror("Ошибка запуска UDEFI", traceback.format_exc())
