@@ -1,5 +1,4 @@
- 
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
@@ -7,7 +6,7 @@
   :root { --accent: #ff6d00; --bg: #0a0a0c; --panel: rgba(24, 24, 28, 0.85); }
   body { margin: 0; font-family: 'Segoe UI', Consolas, sans-serif; background: radial-gradient(circle at 80% 20%, color-mix(in srgb, var(--accent) 25%, #000), var(--bg) 65%); color: #fff; user-select: none; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
   .header { display: flex; justify-content: space-between; align-items: center; padding: 14px 24px; border-bottom: 1px solid rgba(255,255,255,0.08); }
-  .logo { font-size: 19px; font-weight: 800; letter-spacing: 2px; color: var(--accent); text-shadow: 0 0 15px color-mix(in srgb, var(--accent) 50%, transparent); }
+  .logo { font-size: 19px; font-weight: 800; letter-spacing: 2px; color: var(--accent); text-shadow: 0 0 15px color-mix(in srgb, var(--accent) 50%, transparent); cursor: pointer; }
   .themes button { border: none; padding: 6px 10px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-left: 5px; }
   .tabs { display: flex; gap: 8px; padding: 10px 24px; }
   .tab-btn { background: var(--panel); color: #aaa; border: 1px solid rgba(255,255,255,0.08); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 12px; }
@@ -55,12 +54,12 @@
   </div>
 
   <div id="dev-console" style="display:none; position:fixed; top:0; left:0; width:100%; background:rgba(10,10,12,0.96); border-bottom:2px solid var(--accent); padding:14px 20px; box-sizing:border-box; z-index:999; font-family:Consolas,monospace;">
-    <div id="con-log" style="color:var(--accent); font-size:12px; margin-bottom:8px;">UDEFI CONSOLE [Команды: markus | markus 2 | boost | bios] — Ё / E закрыть</div>
-    <input id="con-input" type="text" placeholder="Введи секретную команду..." style="width:100%; background:#16161a; border:1px solid #333; color:#fff; padding:8px; font-family:Consolas,monospace; outline:none; box-sizing:border-box;" onkeydown="if(event.key==='Enter') execSecret(this.value)">
+    <div id="con-log" style="color:var(--accent); font-size:12px; margin-bottom:8px;">UDEFI CONSOLE [Команды: markus | markus 2 | boost | bios] — ESC или Ё закрыть</div>
+    <input id="con-input" type="text" placeholder="Введи секретную команду и нажми Enter..." style="width:100%; background:#16161a; border:1px solid #333; color:#fff; padding:8px; font-family:Consolas,monospace; outline:none; box-sizing:border-box;" onkeydown="if(event.key==='Enter') execSecret(this.value)">
   </div>
 
   <div class="header">
-    <div class="logo">UDEFI // ALL-IN-ONE 0.2.2</div>
+    <div class="logo" title="Открыть консоль (Ё / E)" onclick="toggleCon()">UDEFI // ALL-IN-ONE 0.2.2</div>
     <div class="themes">
       <button style="background:#ff6d00;color:#000" onclick="setTheme('#ff6d00','orange')">ORANGE</button>
       <button style="background:#d50000;color:#fff" onclick="setTheme('#d50000','red')">CRIMSON</button>
@@ -119,8 +118,8 @@
   <div id="tools" class="content">
     <div class="card">
       <div class="grid">
-        <button class="sec-btn" onclick="pywebview.api.open_tool('cpuz')">1. СКАЧАТЬ CPU-Z (ПРОЦ / ОЗУ)</button>
-        <button class="sec-btn" onclick="pywebview.api.open_tool('gpuz')">2. СКАЧАТЬ GPU-Z (ВИДЕОЧИП)</button>
+        <button class="sec-btn" onclick="pywebview.api.open_tool('cpuz')">1. ЗАПУСТИТЬ CPU-Z (ПРОЦ / ОЗУ)</button>
+        <button class="sec-btn" onclick="pywebview.api.open_tool('gpuz')">2. ЗАПУСТИТЬ GPU-Z (ВИДЕОЧИП)</button>
         <button class="sec-btn" onclick="pywebview.api.open_tool('cdi')">3. CRYSTALDISKINFO (ПРОБЕГ SSD)</button>
         <button class="sec-btn" onclick="pywebview.api.open_tool('furmark')">4. FURMARK (СТРЕСС-ТЕСТ GPU)</button>
       </div>
@@ -178,15 +177,20 @@
     pywebview.api.corp_cmd(code).then(res => { document.getElementById('corp-out').innerText = res; });
   }
 
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { exitFull(); document.getElementById('dev-console').style.display = 'none'; return; }
+  function toggleCon() {
+    const con = document.getElementById('dev-console');
     const inp = document.getElementById('con-input');
-    if (document.activeElement === inp && e.key !== '`') return;
-    if (e.key === '`' || e.key === '~' || e.key.toLowerCase() === 'ё' || e.key.toLowerCase() === 'e' || e.key.toLowerCase() === 'у') {
+    con.style.display = con.style.display === 'none' ? 'block' : 'none';
+    if (con.style.display === 'block') { inp.value = ''; inp.focus(); }
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'Escape') { exitFull(); document.getElementById('dev-console').style.display = 'none'; return; }
+    const inp = document.getElementById('con-input');
+    if (document.activeElement === inp && e.code !== 'Backquote') return;
+    if (e.code === 'Backquote' || e.code === 'KeyE') {
       e.preventDefault();
-      const con = document.getElementById('dev-console');
-      con.style.display = con.style.display === 'none' ? 'block' : 'none';
-      if (con.style.display === 'block') { inp.value = ''; inp.focus(); }
+      toggleCon();
     }
   });
 
@@ -200,7 +204,7 @@
       log.innerText = '[OK] Открываю YouTube @MakuAdarii...';
       pywebview.api.open_portal('youtube');
     } else if (c === 'boost' || c === 'буст') {
-      log.innerText = '[OK] Включаю режим максимальной производительности и чищу кэш...';
+      log.innerText = '[OK] Включаю режим высокой производительности и чищу кэш...';
       pywebview.api.system_boost().then(res => { log.innerText = res; });
     } else if (c === 'bios' || c === 'биос') {
       document.getElementById('dev-console').style.display = 'none';
