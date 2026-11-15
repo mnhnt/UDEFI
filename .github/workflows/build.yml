@@ -1,4 +1,4 @@
-name: Build UDEFI Hybrid EXE
+name: Build UDEFI All-in-One EXE
 
 on: [push]
 
@@ -12,14 +12,28 @@ jobs:
           python-version: '3.11'
       - name: Compile C# Core
         run: C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /optimize /r:System.Management.dll /out:udefi_core.exe udefi_core.cs
+      - name: Download Portable Tools
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force -Path tools
+          curl.exe -L -s -o tools\cpuz.zip "https://cpuid.com"
+          Expand-Archive -Path tools\cpuz.zip -DestinationPath tools\cpuz -Force
+          Move-Item -Path tools\cpuz\cpuz_x64.exe -Destination tools\cpuz.exe -Force
+          
+          curl.exe -L -s -A "Mozilla/5.0" -o tools\gpuz.exe "https://techpowerup.com"
+          
+          curl.exe -L -s -o tools\cdi.zip "https://sourceforge.net"
+          Expand-Archive -Path tools\cdi.zip -DestinationPath tools\cdi -Force
+          Move-Item -Path tools\cdi\DiskInfo64.exe -Destination tools\cdi.exe -Force
+          
+          Remove-Item tools\*.zip -Force -ErrorAction SilentlyContinue
       - name: Install Python Deps
         run: pip install pyinstaller pywebview pillow
       - name: Generate Icon
-        run: python -c "from PIL import Image, ImageDraw; img=Image.new('RGBA',(256,256),(0,0,0,0)); d=ImageDraw.Draw(img); d.rounded_rectangle([12,12,244,244],48,fill='#0D0D0D',outline='#FF6D00',width=12); d.arc([58,58,198,198],start=150,end=30,fill='#FF6D00',width=24); img.save('udefi.ico')"
+        run: python -c "from PIL import Image, ImageDraw; img=Image.new('RGBA',(256,256),(0,0,0,0)); d=ImageDraw.Draw(img); d.rounded_rectangle([12,12,244,244],48,fill='#0D0D0D',outline='#FF6D00',width=12); d.arc([56,56,200,200],start=150,end=30,fill='#FF6D00',width=24); img.save('udefi.ico')"
       - name: Build Hybrid EXE
-        run: pyinstaller --noconsole --onefile --icon=udefi.ico --add-data "ui.html;." --add-binary "udefi_core.exe;." --name UDEFI udefi.py
+        run: pyinstaller --noconsole --onefile --icon=udefi.ico --add-data "ui.html;." --add-binary "udefi_core.exe;." --add-data "tools;tools" --name UDEFI udefi.py
       - uses: actions/upload-artifact@v4
         with:
-          name: UDEFI_Hybrid_v0.2_Windows
+          name: UDEFI_AllInOne_Windows
           path: dist/UDEFI.exe
-
