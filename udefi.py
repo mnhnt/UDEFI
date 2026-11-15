@@ -1,5 +1,7 @@
 import webview
 import subprocess
+import webbrowser
+import tempfile
 import ctypes
 import shutil
 import re
@@ -34,6 +36,39 @@ class Api:
         if cur and os.path.exists(cur) and not os.path.exists(self.backup):
             shutil.copy2(cur, self.backup)
 
+    def open_portal(self, target):
+        if target == "site":
+            webbrowser.open("https://adderly.top")
+        elif target == "youtube":
+            webbrowser.open("https://youtube.com")
+
+    def open_tool(self, tool):
+        urls = {
+            "cpuz": "https://cpuid.com",
+            "gpuz": "https://techpowerup.com",
+            "cdi": "https://crystalmark.info",
+            "furmark": "https://geeks3d.com"
+        }
+        if tool in urls:
+            webbrowser.open(urls[tool])
+
+    def system_boost(self):
+        try:
+            subprocess.run("powercfg -setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            tmp = tempfile.gettempdir()
+            cleaned = 0
+            for item in os.listdir(tmp):
+                p = os.path.join(tmp, item)
+                try:
+                    if os.path.isfile(p):
+                        os.remove(p)
+                        cleaned += 1
+                except Exception:
+                    pass
+            return f"[BOOST] Включена высокая производительность! Удалено временных файлов: {cleaned}"
+        except Exception as e:
+            return f"[!] Ошибка буста: {e}"
+
     def gen_wp(self, theme):
         w, h = get_screen_size()
         img = Image.new("RGB", (w, h), "#080808")
@@ -64,8 +99,8 @@ class Api:
         res = window.create_file_dialog(webview.OPEN_DIALOG, file_types=('Изображения (*.jpg;*.png;*.bmp)',))
         if res:
             self._save_backup()
-            ctypes.windll.user32.SystemParametersInfoW(20, 0, res, 3)
-            return f"[OK] Установлены обои: {os.path.basename(res)}"
+            ctypes.windll.user32.SystemParametersInfoW(20, 0, res[0], 3)
+            return f"[OK] Установлены обои: {os.path.basename(res[0])}"
         return ""
 
     def restore_wp(self):
@@ -98,8 +133,8 @@ class Api:
                 os.remove(rep)
                 caps = re.findall(r"(\d[\d\s,]+)\s*mWh", html)
                 if len(caps) >= 2:
-                    d = int(re.sub(r"\D", "", caps))
-                    cur = int(re.sub(r"\D", "", caps))
+                    d = int(re.sub(r"\D", "", caps[0]))
+                    cur = int(re.sub(r"\D", "", caps[1]))
                     wear = max(0, min(100, round((1 - (cur / d)) * 100)))
                     return f"=== ТЕСТ АКБ (ДЛЯ КОРПОРАТИВНЫХ) ===\n• Заводская ёмкость: {d} mWh\n• Текущая ёмкость  : {cur} mWh\n• Износ батареи    : {wear}%"
             return "[!] Контроллер батареи не найден (возможно, АКБ снята)."
@@ -120,5 +155,5 @@ class Api:
 
 if __name__ == "__main__":
     api = Api()
-    window = webview.create_window("UDEFI // Hybrid Engine v0.2-beta", resource_path("ui.html"), js_api=api, width=760, height=540, resizable=False)
+    window = webview.create_window("UDEFI // All-in-One v0.2.2-beta", resource_path("ui.html"), js_api=api, width=780, height=550, resizable=False)
     webview.start()
