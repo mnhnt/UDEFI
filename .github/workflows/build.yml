@@ -1,4 +1,5 @@
-name: Build UDEFI EXE
+
+name: Build UDEFI Hybrid EXE
 
 on: [push]
 
@@ -10,10 +11,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: pip install pyinstaller
-      - run: pyinstaller --noconsole --onefile --name UDEFI udefi.py
+      - name: Compile C# Core
+        run: C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /optimize /r:System.Management.dll /out:udefi_core.exe udefi_core.cs
+      - name: Install Python Deps
+        run: pip install pyinstaller pywebview pillow
+      - name: Build Hybrid EXE
+        run: pyinstaller --noconsole --onefile --add-data "ui.html;." --add-binary "udefi_core.exe;." --name UDEFI udefi.py
       - uses: actions/upload-artifact@v4
         with:
-          name: UDEFI_Windows_x64
+          name: UDEFI_Hybrid_v0.2_Windows
           path: dist/UDEFI.exe
-
